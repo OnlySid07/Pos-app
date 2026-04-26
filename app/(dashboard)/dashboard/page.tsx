@@ -13,22 +13,29 @@ export default async function DashboardPage() {
   const { data: clientesData } = await supabase
     .from('clientes')
     .select('id')
-    .eq('asesor_id', user?.id || '')
+    
 
   const { data: costosData } = await supabase
-    .from('costos')
+    .from('ventas')
     .select('costo_venta, fecha_venta')
     .order('fecha_venta', { ascending: true })
 
+// 1. Actualizamos la consulta para traer el campo 'estado'
   const { data: pagosData } = await supabase
-    .from('caja_pagos')
-    .select('monto, fecha_pago')
+    .from('pagos')
+    .select('monto, fecha_pago, estado') // <--- IMPORTANTE
     .order('fecha_pago', { ascending: true })
 
   const totalClientes = clientesData?.length || 0
   const totalVentas = costosData?.length || 0
+  
+  // 2. Monto Total Vendido (Suma de contratos)
   const montoTotalVendido = costosData?.reduce((sum, item) => sum + (item.costo_venta || 0), 0) || 0
-  const montoCobrado = pagosData?.reduce((sum, item) => sum + (item.monto || 0), 0) || 0
+
+  // 3. Monto Cobrado REAL (Solo lo confirmado)
+  const montoCobrado = pagosData
+    ?.filter((p) => p.estado === 'confirmado') // <--- FILTRO AGREGADO
+    .reduce((sum, item) => sum + (item.monto || 0), 0) || 0
 
   // Agrupar datos por mes para gráficos
   const ventasPorMes = (costosData || []).reduce((acc: any, item: any) => {
@@ -44,18 +51,21 @@ export default async function DashboardPage() {
     return acc
   }, [])
 
-  const pagosPorMes = (pagosData || []).reduce((acc: any, item: any) => {
-    if (!item.fecha_pago) return acc
-    const fecha = new Date(item.fecha_pago)
-    const mes = fecha.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' })
-    const existing = acc.find((m: any) => m.mes === mes)
-    if (existing) {
-      existing.monto += item.monto || 0
-    } else {
-      acc.push({ mes, monto: item.monto || 0 })
-    }
-    return acc
-  }, [])
+// 4. Pagos por mes REALES (Solo lo confirmado para el gráfico)
+  const pagosPorMes = (pagosData || [])
+    .filter((p: any) => p.estado === 'confirmado') // <--- FILTRO AGREGADO AQUÍ TAMBIÉN
+    .reduce((acc: any, item: any) => {
+      if (!item.fecha_pago) return acc
+      const fecha = new Date(item.fecha_pago)
+      const mes = fecha.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' })
+      const existing = acc.find((m: any) => m.mes === mes)
+      if (existing) {
+        existing.monto += item.monto || 0
+      } else {
+        acc.push({ mes, monto: item.monto || 0 })
+      }
+      return acc
+    }, [])
 
   return (
     <div className="space-y-8 p-6">

@@ -16,16 +16,31 @@ export default async function CajaPagosPage() {
     .eq('id', user?.id)
     .single()
 
-  const { data: pagos } = await supabase
-    .from('caja_pagos')
-    .select('*, clientes(apellidos, nombres, codigo_cliente)')
-    .order('fecha_pago', { ascending: false })
+const { data: pagos } = await supabase
+  .from('pagos')
+  .select(`
+    *,
+    ventas (
+      id,
+      clientes (
+        apellidos, 
+        nombres, 
+        codigo_cliente
+      )
+    )
+  `)
+  .order('fecha_pago', { ascending: false })
 
-  // Estadísticas de caja
-  const totalCobrado = pagos?.reduce((sum, pago) => sum + (pago.monto || 0), 0) || 0
-  const pagosPendientes = pagos?.filter((p) => p.estado === 'pendiente') || []
-  const montoPendiente = pagosPendientes.reduce((sum, pago) => sum + (pago.monto || 0), 0) || 0
+// 1. Total Cobrado: Solo sumamos lo que ya está "confirmado"
+const totalCobrado = pagos
+  ?.filter((p) => p.estado === 'confirmado')
+  .reduce((sum, pago) => sum + (pago.monto || 0), 0) || 0
 
+// 2. Pagos Pendientes: Filtramos los registros que aún no se validan
+const pagosPendientes = pagos?.filter((p) => p.estado === 'pendiente') || []
+
+// 3. Monto Pendiente: Sumamos solo esos registros pendientes
+const montoPendiente = pagosPendientes.reduce((sum, pago) => sum + (pago.monto || 0), 0) || 0
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">

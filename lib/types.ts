@@ -76,7 +76,7 @@ export interface Costo {
   aporte_cuota_inicial?: number
   monto_financiar?: number
   fecha_venta?: string
-  num_cuotas?: number
+  numero_cuotas?: number
   monto_cuota?: number
   fecha_contrato?: string
   deuda_mora?: number
@@ -89,6 +89,7 @@ export interface Costo {
 
 export interface CajaPago {
   id: string
+  venta_id: string;
   cliente_id: string
   tipo_pago: string
   monto: number

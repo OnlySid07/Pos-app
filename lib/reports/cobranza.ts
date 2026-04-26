@@ -1,40 +1,37 @@
 import jsPDF from 'jspdf'
-import 'jspdf-autotable'
+import autoTable from 'jspdf-autotable' // 👈 Importación directa obligatoria
 
 export async function generateCobranzaReport(pagos: any[]) {
   const doc = new jsPDF()
 
-  // Title
+  // --- Cabecera del Reporte ---
   doc.setFontSize(16)
   doc.text('Reporte de Cobranza', 14, 22)
 
-  // Date
   doc.setFontSize(10)
   doc.setTextColor(100)
   doc.text(`Generado: ${new Date().toLocaleDateString('es-ES')}`, 14, 32)
 
-  // Summary
+  // --- Lógica de Resumen ---
   const totalPagos = pagos.length
-  const montoCobrado = pagos.reduce((sum, p) => sum + (p.monto || 0), 0)
-  const pagosConfirmados = pagos.filter((p) => p.estado === 'confirmado').length
-  const pagosPendientes = pagos.filter((p) => p.estado === 'pendiente').length
-  const montoPendiente = pagos
-    .filter((p) => p.estado === 'pendiente')
+  const montoCobrado = pagos
+    .filter((p) => p.estado === 'confirmado')
     .reduce((sum, p) => sum + (p.monto || 0), 0)
+  const pagosPendientes = pagos.filter((p) => p.estado === 'pendiente').length
 
   doc.setFontSize(11)
   doc.setTextColor(0)
-  doc.text('Resumen:', 14, 45)
+  doc.text('Resumen de Caja:', 14, 45)
 
   const summaryData = [
-    ['Total de Pagos Registrados', totalPagos.toString()],
-    ['Monto Total Cobrado', `S/. ${montoCobrado.toFixed(2)}`],
-    ['Pagos Confirmados', pagosConfirmados.toString()],
-    ['Pagos Pendientes', pagosPendientes.toString()],
-    ['Monto Pendiente', `S/. ${montoPendiente.toFixed(2)}`],
+    ['Total de Registros', totalPagos.toString()],
+    ['Monto Total Confirmado', `S/. ${montoCobrado.toFixed(2)}`],
+    ['Pagos por Confirmar', pagosPendientes.toString()],
   ]
 
-  ;(doc as any).autoTable({
+  // --- PRIMERA TABLA: Resumen ---
+  // CAMBIAMOS (doc as any).autoTable por autoTable(doc, ...)
+  autoTable(doc, {
     startY: 52,
     head: [['Concepto', 'Valor']],
     body: summaryData,
@@ -42,28 +39,41 @@ export async function generateCobranzaReport(pagos: any[]) {
     margin: 14,
   })
 
-  // Detailed table
-  const tableData = pagos.map((pago) => [
-    [pago.clientes?.apellidos, pago.clientes?.nombres].filter(Boolean).join(' ') || 'N/A',
+  // --- SEGUNDA TABLA: Detalle de Pagos ---
+const tableData = pagos.map((pago) => {
+  // 1. Intentamos obtener el cliente a través de la venta
+  const cliente = pago.ventas?.clientes;
+
+  // 2. Si no hay venta (pagos antiguos), quizás aún esté el cliente_id directo
+  // Esto es opcional, pero ayuda si tienes registros viejos
+  const nombreCliente = cliente 
+    ? `${cliente.apellidos}, ${cliente.nombres}`
+    : 'N/A';
+
+  return [
+    nombreCliente,
     pago.tipo_pago,
     `S/. ${pago.monto?.toFixed(2)}`,
     pago.metodo_pago || '-',
-    pago.estado,
+    pago.estado.toUpperCase(),
     pago.fecha_pago ? new Date(pago.fecha_pago).toLocaleDateString('es-ES') : '-',
-  ])
+  ];
+});
 
-  ;(doc as any).autoTable({
-    startY: (doc as any).lastAutoTable?.finalY + 10 || 120,
-    head: [['Cliente', 'Tipo Pago', 'Monto', 'Método', 'Estado', 'Fecha']],
+  autoTable(doc, {
+    // Usamos finalY de la tabla anterior de forma segura
+    startY: (doc as any).lastAutoTable.finalY + 10,
+    head: [['Cliente', 'Tipo', 'Monto', 'Método', 'Estado', 'Fecha']],
     body: tableData,
     theme: 'striped',
     margin: 14,
+    headStyles: { fillColor: [41, 128, 185] }, // Un azul profesional para cobranza
     columnStyles: {
       2: { halign: 'right' },
     },
   })
 
-  // Footer
+  // --- Pie de página ---
   const pageCount = (doc as any).internal.getNumberOfPages()
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i)

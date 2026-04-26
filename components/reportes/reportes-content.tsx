@@ -127,7 +127,9 @@ export function ReportesContent({
                 <div>
                   <p className="text-sm text-muted-foreground">Monto Cobrado</p>
                   <p className="text-2xl font-bold">
-                    S/. {(pagos.reduce((sum, p) => sum + (p.monto || 0), 0) / 1000).toFixed(1)}K
+                    S/. {(pagos
+                      .filter((p) => p.estado === 'confirmado')
+                      .reduce((sum, p) => sum + (p.monto || 0), 0) / 1000).toFixed(1)}K
                   </p>
                 </div>
                 <div>

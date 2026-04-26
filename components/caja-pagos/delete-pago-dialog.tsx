@@ -25,7 +25,7 @@ export function DeletePagoDialog({ pagoId }: { pagoId: string }) {
 
     try {
       const { error } = await supabase
-        .from('caja_pagos')
+        .from('pagos')
         .delete()
         .eq('id', pagoId)
 

@@ -15,26 +15,30 @@ import {
 import { Trash2 } from 'lucide-react'
 
 export function DeleteUsuarioDialog({ usuarioId }: { usuarioId: string }) {
-  const [open, setOpen] = useState(false)
+const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
   const handleDelete = async () => {
     setIsLoading(true)
 
     try {
-      const { error } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', usuarioId)
+      // LLAMADA A TU API INTERNA
+      const response = await fetch(`/api/usuarios?id=${usuarioId}`, {
+        method: 'DELETE',
+      })
 
-      if (error) throw error
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Error al eliminar usuario')
+      }
 
       setOpen(false)
-      router.refresh()
+      router.refresh() // Actualiza la lista de usuarios en la pantalla
     } catch (error) {
-      console.error('[v0] Delete error:', error)
+      console.error('Delete error:', error)
+      // Opcional: podrías usar un toast aquí para mostrar el error al usuario
     } finally {
       setIsLoading(false)
     }

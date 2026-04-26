@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf'
-import 'jspdf-autotable'
+import autoTable from 'jspdf-autotable'
 
 export async function generateVentasReport(costos: any[]) {
   const doc = new jsPDF()
@@ -13,7 +13,7 @@ export async function generateVentasReport(costos: any[]) {
   doc.setTextColor(100)
   doc.text(`Generado: ${new Date().toLocaleDateString('es-ES')}`, 14, 32)
 
-  // Summary
+  // Summary logic
   const totalVentas = costos.length
   const montoTotal = costos.reduce((sum, c) => sum + (c.costo_venta || 0), 0)
   const ventasFinanciadas = costos.filter((c) => c.tipo_venta === 'financiado').length
@@ -30,7 +30,8 @@ export async function generateVentasReport(costos: any[]) {
     ['Comisiones Pagadas', `S/. ${comisionesTotal.toFixed(2)}`],
   ]
 
-  ;(doc as any).autoTable({
+  // --- PRIMERA TABLA CORREGIDA ---
+  autoTable(doc, {
     startY: 52,
     head: [['Concepto', 'Valor']],
     body: summaryData,
@@ -38,7 +39,10 @@ export async function generateVentasReport(costos: any[]) {
     margin: 14,
   })
 
-  // Detailed table
+  // Obtenemos la posición final de la tabla anterior de forma segura
+  const finalY = (doc as any).lastAutoTable.finalY
+
+  // Detailed table data
   const tableData = costos.map((venta) => [
     [venta.clientes?.apellidos, venta.clientes?.nombres].filter(Boolean).join(' ') || 'N/A',
     venta.tipo_venta,
@@ -48,8 +52,9 @@ export async function generateVentasReport(costos: any[]) {
     venta.fecha_venta ? new Date(venta.fecha_venta).toLocaleDateString('es-ES') : '-',
   ])
 
-  ;(doc as any).autoTable({
-    startY: (doc as any).lastAutoTable?.finalY + 10 || 100,
+  // --- SEGUNDA TABLA CORREGIDA ---
+  autoTable(doc, {
+    startY: finalY + 10,
     head: [['Cliente', 'Tipo', 'Costo', 'Cuota Inicial', 'Monto Financiar', 'Fecha']],
     body: tableData,
     theme: 'striped',

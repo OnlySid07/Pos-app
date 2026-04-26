@@ -115,7 +115,7 @@ export function Sidebar({ userRole }: { userRole?: string }) {
         <div className="flex flex-col h-full">
           {/* Logo/Header */}
           <div className="p-6 border-b border-sidebar-border">
-            <h1 className="text-2xl font-bold text-sidebar-foreground">Fair</h1>
+            <h1 className="text-2xl font-bold text-sidebar-foreground">JOS</h1>
             <p className="text-xs text-sidebar-foreground/60 mt-1">Gestión Inmobiliaria</p>
           </div>
 

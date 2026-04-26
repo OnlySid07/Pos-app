@@ -85,7 +85,7 @@ export function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
     const mz = (mzValue || '').trim().toUpperCase()
     const dni = (dniValue || '').trim()
     const lote = (loteValue || '').trim()
-    const codigo = [mz, dni, lote].filter(Boolean).join('-')
+    const codigo = [mz, dni, lote].filter(Boolean).join('')
 
     if (form.getValues('codigo_cliente') !== codigo) {
       form.setValue('codigo_cliente', codigo, { shouldValidate: true })

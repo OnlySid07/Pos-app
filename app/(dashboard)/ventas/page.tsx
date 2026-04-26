@@ -7,7 +7,7 @@ export default async function VentasPage() {
   const { role, supabase } = await getUserAndRole()
 
   const { data: ventas } = await supabase
-    .from('costos')
+    .from('ventas')
     .select('*, clientes(apellidos, nombres, codigo_cliente)')
     .order('fecha_venta', { ascending: false })
 

@@ -1,6 +1,9 @@
 'use client'
 
 import { CajaPago } from '@/lib/types'
+import { Printer } from 'lucide-react' // Importamos el icono
+import { Button } from '@/components/ui/button'
+import { generateReciboPDF } from '@/lib/reports/recibo' // Importamos tu función
 import {
   Table,
   TableBody,
@@ -54,34 +57,64 @@ export function CajaPagosTable({
               </TableCell>
             </TableRow>
           ) : (
-            pagos.map((pago) => (
-              <TableRow key={pago.id}>
-                <TableCell className="font-medium">
-                  {pago.clientes?.codigo_cliente} - {[pago.clientes?.apellidos, pago.clientes?.nombres].filter(Boolean).join(' ')}
-                </TableCell>
-                <TableCell>{pago.tipo_pago}</TableCell>
-                <TableCell className="font-mono font-semibold">
-                  S/. {pago.monto?.toFixed(2)}
-                </TableCell>
-                <TableCell className="text-sm">
-                  {pago.fecha_pago ? new Date(pago.fecha_pago).toLocaleDateString('es-ES') : '-'}
-                </TableCell>
-                <TableCell className="text-sm">{pago.metodo_pago || '-'}</TableCell>
-                <TableCell>
-                  <Badge className={estadoColors[pago.estado] || 'bg-gray-100 text-gray-800'}>
-                    {estadoLabels[pago.estado] || pago.estado}
-                  </Badge>
-                </TableCell>
-                <TableCell className="flex gap-2">
-                  {(userRole === 'admin' || userRole === 'finanzas') && (
-                    <>
-                      <EditPagoDialog pago={pago} />
-                      <DeletePagoDialog pagoId={pago.id} />
-                    </>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))
+            pagos.map((pago) => {
+              // Extraemos el cliente para que el código sea más legible
+              const cliente = pago.ventas?.clientes;
+
+              return (
+                <TableRow key={pago.id}>
+                  <TableCell className="font-medium">
+                    {cliente ? (
+                      <>
+                        <span className="text-xs text-muted-foreground block">
+                          {cliente.codigo_cliente}
+                        </span>
+                        <span>
+                          {[cliente.apellidos, cliente.nombres].filter(Boolean).join(' ')}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground italic text-sm">
+                        Sin cliente asignado
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="capitalize">{pago.tipo_pago}</TableCell>
+                  <TableCell className="font-mono font-semibold">
+                    S/. {pago.monto?.toFixed(2)}
+                  </TableCell>
+                  <TableCell className="text-sm">
+                    {pago.fecha_pago ? new Date(pago.fecha_pago).toLocaleDateString('es-ES') : '-'}
+                  </TableCell>
+                  <TableCell className="text-sm">{pago.metodo_pago || '-'}</TableCell>
+                  <TableCell>
+                    <Badge className={estadoColors[pago.estado] || 'bg-gray-100 text-gray-800'}>
+                      {estadoLabels[pago.estado] || pago.estado}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="flex gap-2">
+                    {/* Botón de Reimpresión - Visible para todos o según rol */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      title="Reimprimir Recibo"
+                      onClick={() => generateReciboPDF(pago, pago.ventas?.clientes)}
+                    >
+                      <Printer className="h-4 w-4" />
+                    </Button>
+
+                    {(userRole === 'admin' || userRole === 'finanzas') && (
+                      <>
+                        <EditPagoDialog pago={pago} />
+                        <DeletePagoDialog pagoId={pago.id} />
+                      </>
+                    )}
+                  </TableCell>
+
+
+                </TableRow>
+              )
+            })
           )}
         </TableBody>
       </Table>

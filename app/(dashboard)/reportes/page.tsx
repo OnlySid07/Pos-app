@@ -21,14 +21,24 @@ export default async function ReportesPage() {
     .select('id, apellidos, nombres, codigo_cliente')
 
   const { data: costos } = await supabase
-    .from('costos')
+    .from('ventas')
     .select('*, clientes(apellidos, nombres)')
     .order('fecha_venta', { ascending: false })
 
-  const { data: pagos } = await supabase
-    .from('caja_pagos')
-    .select('*, clientes(apellidos, nombres)')
-    .order('fecha_pago', { ascending: false })
+const { data: pagos } = await supabase
+  .from('pagos')
+  .select(`
+    *,
+    ventas (
+      id,
+      clientes (
+        apellidos,
+        nombres,
+        codigo_cliente
+      )
+    )
+  `)
+  .order('fecha_pago', { ascending: false })
 
   return (
     <div className="space-y-6 p-6">

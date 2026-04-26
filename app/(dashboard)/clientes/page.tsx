@@ -6,14 +6,11 @@ import { getUserAndRole } from '@/lib/auth-service'
 export default async function ClientesPage() {
   const { user, role, supabase } = await getUserAndRole()
 
-  // Obtener clientes basado en el rol
-  let query = supabase.from('clientes').select('*')
-
-  if (role === 'asesor') {
-    query = query.eq('asesor_id', user.id)
-  }
-
-  const { data: clientes } = await query.order('created_at', { ascending: false })
+  // Quitamos el filtro 'eq' para que traiga la base de datos completa de clientes
+  const { data: clientes } = await supabase
+    .from('clientes')
+    .select('*')
+    .order('created_at', { ascending: false })
 
   return (
     <div className="space-y-6 p-6">

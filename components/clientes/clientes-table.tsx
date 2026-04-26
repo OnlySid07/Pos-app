@@ -9,10 +9,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Button } from '@/components/ui/button'
+
 import { EditClienteDialog } from './edit-cliente-dialog'
 import { DeleteClienteDialog } from './delete-cliente-dialog'
-import { Eye } from 'lucide-react'
+
 
 export function ClientesTable({
   clientes,

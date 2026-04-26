@@ -7,9 +7,9 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Fair - Sistema de Gestión Inmobiliaria',
+  title: 'Jos - Sistema de Gestión Inmobiliaria',
   description: 'Sistema integral de gestión de clientes, propiedades y ventas inmobiliarias',
-  generator: 'v0.app',
+  generator: 'next.js',
   icons: {
     icon: [
       {

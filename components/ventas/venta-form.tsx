@@ -25,6 +25,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { Cliente, Costo } from '@/lib/types'
 
+// 1. Eliminamos comision_venta del schema
 const ventaSchema = z.object({
   cliente_id: z.string().min(1, 'Cliente requerido'),
   tipo_venta: z.enum(['contado', 'financiado', 'mixto']),
@@ -32,13 +33,12 @@ const ventaSchema = z.object({
   aporte_cuota_inicial: z.coerce.number().optional(),
   monto_financiar: z.coerce.number().optional(),
   fecha_venta: z.string().optional(),
-  num_cuotas: z.coerce.number().int().optional(),
+  numero_cuotas: z.coerce.number().int().optional(),
   monto_cuota: z.coerce.number().optional(),
   fecha_contrato: z.string().optional(),
   deuda_mora: z.coerce.number().default(0),
   sobrante: z.coerce.number().default(0),
   observacion: z.string().optional(),
-  comision_venta: z.coerce.number().optional(),
 })
 
 type VentaFormValues = z.infer<typeof ventaSchema>
@@ -62,21 +62,39 @@ export function VentaForm({ venta, onSuccess }: VentaFormProps) {
       aporte_cuota_inicial: venta?.aporte_cuota_inicial,
       monto_financiar: venta?.monto_financiar,
       fecha_venta: venta?.fecha_venta || '',
-      num_cuotas: venta?.num_cuotas,
+      numero_cuotas: venta?.numero_cuotas,
       monto_cuota: venta?.monto_cuota,
       fecha_contrato: venta?.fecha_contrato || '',
       deuda_mora: venta?.deuda_mora || 0,
       sobrante: venta?.sobrante || 0,
       observacion: venta?.observacion || '',
-      comision_venta: venta?.comision_venta,
     },
   })
+
+  // 2. Observamos los campos en tiempo real
+  const costoVenta = form.watch('costo_venta')
+  const aporteInicial = form.watch('aporte_cuota_inicial')
+
+  // 3. Efecto para autocalcular el Monto a Financiar
+  useEffect(() => {
+    const costo = Number(costoVenta) || 0
+    const aporte = Number(aporteInicial) || 0
+    
+    if (costo > 0) {
+      // Calculamos la diferencia y evitamos números negativos
+      const diferencia = Math.max(0, costo - aporte)
+      form.setValue('monto_financiar', diferencia, { 
+        shouldValidate: true,
+        shouldDirty: true 
+      })
+    }
+  }, [costoVenta, aporteInicial, form])
 
   useEffect(() => {
     const fetchClientes = async () => {
       const { data } = await supabase
         .from('clientes')
-        .select('id, apellidos, nombres, codigo_cliente')
+        .select('*')
         .order('apellidos')
 
       setClientes(data || [])
@@ -91,14 +109,14 @@ export function VentaForm({ venta, onSuccess }: VentaFormProps) {
     try {
       if (venta) {
         const { error } = await supabase
-          .from('costos')
+          .from('ventas') // Asegúrate de que el nombre de la tabla sea correcto ('ventas' o 'costos')
           .update(values)
           .eq('id', venta.id)
 
         if (error) throw error
       } else {
         const { error } = await supabase
-          .from('costos')
+          .from('ventas') // Asegúrate de que el nombre de la tabla sea correcto ('ventas' o 'costos')
           .insert(values)
 
         if (error) throw error
@@ -208,7 +226,8 @@ export function VentaForm({ venta, onSuccess }: VentaFormProps) {
                 <FormItem>
                   <FormLabel>Monto a Financiar</FormLabel>
                   <FormControl>
-                    <Input {...field} type="number" placeholder="400000" />
+                    {/* Lo ponemos readOnly opcionalmente si no quieres que lo editen a mano */}
+                    <Input {...field} type="number" placeholder="Calculado auto." />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -219,7 +238,7 @@ export function VentaForm({ venta, onSuccess }: VentaFormProps) {
           <div className="grid grid-cols-2 gap-4">
             <FormField
               control={form.control}
-              name="num_cuotas"
+              name="numero_cuotas"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Número de Cuotas</FormLabel>
@@ -284,6 +303,7 @@ export function VentaForm({ venta, onSuccess }: VentaFormProps) {
         <div className="space-y-2">
           <h3 className="font-semibold text-sm">Situación de Pago</h3>
 
+          {/* 4. Colocamos Deuda Mora y Sobrante en la misma fila */}
           <div className="grid grid-cols-2 gap-4">
             <FormField
               control={form.control}
@@ -301,10 +321,10 @@ export function VentaForm({ venta, onSuccess }: VentaFormProps) {
 
             <FormField
               control={form.control}
-              name="comision_venta"
+              name="sobrante"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Pago de Comisión</FormLabel>
+                  <FormLabel>Sobrante</FormLabel>
                   <FormControl>
                     <Input {...field} type="number" placeholder="0" />
                   </FormControl>
@@ -313,20 +333,6 @@ export function VentaForm({ venta, onSuccess }: VentaFormProps) {
               )}
             />
           </div>
-
-          <FormField
-            control={form.control}
-            name="sobrante"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Sobrante</FormLabel>
-                <FormControl>
-                  <Input {...field} type="number" placeholder="0" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         </div>
 
         <FormField
