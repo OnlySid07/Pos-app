@@ -45,7 +45,7 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl">Fair</CardTitle>
+        <CardTitle className="text-2xl">Jos In</CardTitle>
         <CardDescription>
           Sistema de Gestión Inmobiliaria
         </CardDescription>
@@ -97,12 +97,7 @@ export function LoginForm() {
           </Button>
         </form>
 
-        <div className="mt-6 space-y-2 text-center text-sm text-muted-foreground">
-          <p>Credenciales de prueba:</p>
-          <p className="font-mono text-xs">
-            admin@example.com / password123
-          </p>
-        </div>
+
       </CardContent>
     </Card>
   )
