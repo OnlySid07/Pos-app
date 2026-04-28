@@ -107,16 +107,24 @@ export function Sidebar({ userRole }: { userRole?: string }) {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed left-0 top-0 h-screen w-64 bg-sidebar border-r border-sidebar-border transition-transform duration-300 z-40',
+          'fixed left-0 top-0 h-screen w-64 bg-sidebar border-r border-sidebar-border transition-transform duration-300 z-50',
           'lg:translate-x-0',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         <div className="flex flex-col h-full">
-          {/* Logo/Header */}
-          <div className="p-6 border-b border-sidebar-border">
-            <h1 className="text-2xl font-bold text-sidebar-foreground">JOS</h1>
-            <p className="text-xs text-sidebar-foreground/60 mt-1">Gestión Inmobiliaria</p>
+          {/* Logo/Header with Close Button */}
+          <div className="flex items-center justify-between p-6 border-b border-sidebar-border">
+            <div>
+              <h1 className="text-2xl font-bold text-sidebar-foreground">JOS</h1>
+              <p className="text-xs text-sidebar-foreground/60 mt-1">Gestión Inmobiliaria</p>
+            </div>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="lg:hidden text-sidebar-foreground hover:text-sidebar-accent p-1"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
 
           {/* Navigation Links */}

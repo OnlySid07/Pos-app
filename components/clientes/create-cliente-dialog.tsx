@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
+import { invalidateTagsAndRefresh } from '@/lib/cache-client'
+import { CACHE_TAGS } from '@/lib/cache-tags'
 import {
   Dialog,
   DialogContent,
@@ -22,7 +24,13 @@ export function CreateClienteDialog() {
 
   const handleSuccess = async () => {
     setOpen(false)
-    router.refresh()
+    await invalidateTagsAndRefresh(router, [
+      CACHE_TAGS.clientes,
+      CACHE_TAGS.ventas,
+      CACHE_TAGS.pagos,
+      CACHE_TAGS.dashboard,
+      CACHE_TAGS.reportes,
+    ])
   }
 
   return (

@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { invalidateTagsAndRefresh } from '@/lib/cache-client'
+import { CACHE_TAGS } from '@/lib/cache-tags'
 import {
   Dialog,
   DialogContent,
@@ -19,9 +21,9 @@ export function EditPropiedadDialog({ propiedad }: { propiedad: Propiedad }) {
   const [open, setOpen] = useState(false)
   const router = useRouter()
 
-  const handleSuccess = () => {
+  const handleSuccess = async () => {
     setOpen(false)
-    router.refresh()
+    await invalidateTagsAndRefresh(router, [CACHE_TAGS.propiedades])
   }
 
   return (

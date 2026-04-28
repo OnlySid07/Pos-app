@@ -68,7 +68,7 @@ export function ReportesContent({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Total Ventas</p>
                   <p className="text-2xl font-bold">{costos.length}</p>
@@ -119,7 +119,7 @@ export function ReportesContent({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Total Pagos</p>
                   <p className="text-2xl font-bold">{pagos.length}</p>

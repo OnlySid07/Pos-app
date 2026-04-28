@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
+import { invalidateTagsAndRefresh } from '@/lib/cache-client'
+import { CACHE_TAGS } from '@/lib/cache-tags'
 import {
   Dialog,
   DialogContent,
@@ -35,7 +37,7 @@ const [open, setOpen] = useState(false)
       }
 
       setOpen(false)
-      router.refresh() // Actualiza la lista de usuarios en la pantalla
+      await invalidateTagsAndRefresh(router, [CACHE_TAGS.usuarios])
     } catch (error) {
       console.error('Delete error:', error)
       // Opcional: podrías usar un toast aquí para mostrar el error al usuario

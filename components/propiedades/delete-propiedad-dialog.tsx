@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
+import { invalidateTagsAndRefresh } from '@/lib/cache-client'
+import { CACHE_TAGS } from '@/lib/cache-tags'
 import {
   Dialog,
   DialogContent,
@@ -32,7 +34,7 @@ export function DeletePropiedadDialog({ propiedadId }: { propiedadId: string }) 
       if (error) throw error
 
       setOpen(false)
-      router.refresh()
+      await invalidateTagsAndRefresh(router, [CACHE_TAGS.propiedades])
     } catch (error) {
       console.error('[v0] Delete error:', error)
     } finally {

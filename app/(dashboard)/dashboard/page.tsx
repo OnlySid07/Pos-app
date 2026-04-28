@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
+import { DataRefreshButton } from '@/components/layout/data-refresh-button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DashboardCharts } from '@/components/dashboard/dashboard-charts'
+import { CACHE_TAGS, DEFAULT_CACHE_REVALIDATE_SECONDS } from '@/lib/cache-tags'
+import { unstable_cache } from 'next/cache'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -9,33 +12,49 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Obtener estadísticas
-  const { data: clientesData } = await supabase
-    .from('clientes')
-    .select('id')
-    
+  const getDashboardData = unstable_cache(
+    async () => {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`[cache-miss] dashboard query user=${user?.id || 'anonymous'} ts=${new Date().toISOString()}`)
+      }
 
-  const { data: costosData } = await supabase
-    .from('ventas')
-    .select('costo_venta, fecha_venta')
-    .order('fecha_venta', { ascending: true })
+      const [{ data: clientesData }, { data: costosData }, { data: pagosData }] = await Promise.all([
+        supabase.from('clientes').select('id'),
+        supabase
+          .from('ventas')
+          .select('costo_venta, fecha_venta')
+          .order('fecha_venta', { ascending: true }),
+        supabase
+          .from('pagos')
+          .select('monto, fecha_pago, estado')
+          .order('fecha_pago', { ascending: true }),
+      ])
 
-// 1. Actualizamos la consulta para traer el campo 'estado'
-  const { data: pagosData } = await supabase
-    .from('pagos')
-    .select('monto, fecha_pago, estado') // <--- IMPORTANTE
-    .order('fecha_pago', { ascending: true })
+      return {
+        clientesData: clientesData || [],
+        costosData: costosData || [],
+        pagosData: pagosData || [],
+      }
+    },
+    ['dashboard-page-data', user?.id || 'anonymous'],
+    {
+      tags: [CACHE_TAGS.dashboard, CACHE_TAGS.clientes, CACHE_TAGS.ventas, CACHE_TAGS.pagos],
+      revalidate: DEFAULT_CACHE_REVALIDATE_SECONDS,
+    }
+  )
 
-  const totalClientes = clientesData?.length || 0
-  const totalVentas = costosData?.length || 0
+  const { clientesData, costosData, pagosData } = await getDashboardData()
+
+  const totalClientes = clientesData.length
+  const totalVentas = costosData.length
   
   // 2. Monto Total Vendido (Suma de contratos)
-  const montoTotalVendido = costosData?.reduce((sum, item) => sum + (item.costo_venta || 0), 0) || 0
+  const montoTotalVendido = costosData.reduce((sum, item) => sum + (item.costo_venta || 0), 0)
 
   // 3. Monto Cobrado REAL (Solo lo confirmado)
   const montoCobrado = pagosData
-    ?.filter((p) => p.estado === 'confirmado') // <--- FILTRO AGREGADO
-    .reduce((sum, item) => sum + (item.monto || 0), 0) || 0
+    .filter((p) => p.estado === 'confirmado')
+    .reduce((sum, item) => sum + (item.monto || 0), 0)
 
   // Agrupar datos por mes para gráficos
   const ventasPorMes = (costosData || []).reduce((acc: any, item: any) => {
@@ -71,8 +90,16 @@ export default async function DashboardPage() {
     <div className="space-y-8 p-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground mt-2">Bienvenido de vuelta al sistema</p>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+            <p className="text-muted-foreground mt-2">Bienvenido de vuelta al sistema</p>
+          </div>
+          <DataRefreshButton
+            tags={[CACHE_TAGS.dashboard, CACHE_TAGS.clientes, CACHE_TAGS.ventas, CACHE_TAGS.pagos]}
+            label="Refrescar dashboard"
+          />
+        </div>
       </div>
 
       {/* Stats Grid */}
