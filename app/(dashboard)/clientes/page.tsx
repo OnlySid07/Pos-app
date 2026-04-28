@@ -11,14 +11,26 @@ export default async function ClientesPage() {
 
   const getClientes = unstable_cache(
     async () => {
+      // Este log solo aparece si realmente está haciendo query a la DB
+      // Si no lo ves, significa que está usando el cache
+      const startTime = Date.now()
       if (process.env.NODE_ENV !== 'production') {
-        console.log(`[cache-miss] clientes query user=${user.id} ts=${new Date().toISOString()}`)
+        console.log(
+          `[DB-QUERY] clientes - Ejecutando query a la DB para user=${user.id}`
+        )
       }
 
       const { data } = await supabase
         .from('clientes')
         .select('*')
         .order('created_at', { ascending: false })
+
+      const duration = Date.now() - startTime
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(
+          `[DB-QUERY-DONE] clientes - Query completada en ${duration}ms`
+        )
+      }
 
       return data || []
     },
@@ -30,6 +42,10 @@ export default async function ClientesPage() {
   )
 
   const clientes = await getClientes()
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[CACHE-CHECK] clientes - Si viste [DB-QUERY] arriba = query nueva. Si no lo viste = usando cache ✓`)
+  }
 
   return (
     <div className="space-y-6 p-6">

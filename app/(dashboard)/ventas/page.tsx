@@ -11,14 +11,24 @@ export default async function VentasPage() {
 
   const getVentas = unstable_cache(
     async () => {
+      const startTime = Date.now()
       if (process.env.NODE_ENV !== 'production') {
-        console.log(`[cache-miss] ventas query user=${user.id} ts=${new Date().toISOString()}`)
+        console.log(
+          `[DB-QUERY] ventas - Ejecutando query a la DB para user=${user.id}`
+        )
       }
 
       const { data } = await supabase
         .from('ventas')
         .select('*, clientes(apellidos, nombres, codigo_cliente)')
         .order('fecha_venta', { ascending: false })
+
+      const duration = Date.now() - startTime
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(
+          `[DB-QUERY-DONE] ventas - Query completada en ${duration}ms`
+        )
+      }
 
       return data || []
     },
@@ -30,6 +40,10 @@ export default async function VentasPage() {
   )
 
   const ventas = await getVentas()
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[CACHE-CHECK] ventas - Si viste [DB-QUERY] arriba = query nueva. Si no lo viste = usando cache ✓`)
+  }
 
   return (
     <div className="space-y-6 p-6">

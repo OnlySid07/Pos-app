@@ -21,8 +21,11 @@ export default async function CajaPagosPage() {
 
   const getPagos = unstable_cache(
     async () => {
+      const startTime = Date.now()
       if (process.env.NODE_ENV !== 'production') {
-        console.log(`[cache-miss] pagos query user=${user?.id || 'anonymous'} ts=${new Date().toISOString()}`)
+        console.log(
+          `[DB-QUERY] pagos - Ejecutando query a la DB para user=${user?.id || 'anonymous'}`
+        )
       }
 
       const { data } = await supabase
@@ -40,6 +43,13 @@ export default async function CajaPagosPage() {
         `)
         .order('fecha_pago', { ascending: false })
 
+      const duration = Date.now() - startTime
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(
+          `[DB-QUERY-DONE] pagos - Query completada en ${duration}ms`
+        )
+      }
+
       return data || []
     },
     ['pagos-page-list', user?.id || 'anonymous'],
@@ -50,6 +60,10 @@ export default async function CajaPagosPage() {
   )
 
   const pagos = await getPagos()
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[CACHE-CHECK] pagos - Si viste [DB-QUERY] arriba = query nueva. Si no lo viste = usando cache ✓`)
+  }
 
 // 1. Total Cobrado: Solo sumamos lo que ya está "confirmado"
   const totalCobrado = pagos

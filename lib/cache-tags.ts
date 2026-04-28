@@ -12,4 +12,5 @@ export type CacheTag = (typeof CACHE_TAGS)[keyof typeof CACHE_TAGS]
 
 export const ALLOWED_CACHE_TAGS: ReadonlySet<string> = new Set(Object.values(CACHE_TAGS))
 
-export const DEFAULT_CACHE_REVALIDATE_SECONDS = 60 * 30
+// Aumentado a 1 hora para asegurar que datos persistan durante navegación
+export const DEFAULT_CACHE_REVALIDATE_SECONDS = 60 * 60

@@ -21,14 +21,24 @@ export default async function PropiedadesPage() {
 
   const getPropiedades = unstable_cache(
     async () => {
+      const startTime = Date.now()
       if (process.env.NODE_ENV !== 'production') {
-        console.log(`[cache-miss] propiedades query user=${user?.id || 'anonymous'} ts=${new Date().toISOString()}`)
+        console.log(
+          `[DB-QUERY] propiedades - Ejecutando query a la DB para user=${user?.id || 'anonymous'}`
+        )
       }
 
       const { data } = await supabase
         .from('propiedades')
         .select('*')
         .order('created_at', { ascending: false })
+
+      const duration = Date.now() - startTime
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(
+          `[DB-QUERY-DONE] propiedades - Query completada en ${duration}ms`
+        )
+      }
 
       return data || []
     },
@@ -40,6 +50,10 @@ export default async function PropiedadesPage() {
   )
 
   const propiedades = await getPropiedades()
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[CACHE-CHECK] propiedades - Si viste [DB-QUERY] arriba = query nueva. Si no lo viste = usando cache ✓`)
+  }
 
   return (
     <div className="space-y-6 p-6">

@@ -20,8 +20,11 @@ export default async function ReportesPage() {
 
   const getReportesData = unstable_cache(
     async () => {
+      const startTime = Date.now()
       if (process.env.NODE_ENV !== 'production') {
-        console.log(`[cache-miss] reportes query user=${user?.id || 'anonymous'} ts=${new Date().toISOString()}`)
+        console.log(
+          `[DB-QUERY] reportes - Ejecutando query a la DB para user=${user?.id || 'anonymous'}`
+        )
       }
 
       const [{ data: clientes }, { data: costos }, { data: pagos }] = await Promise.all([
@@ -48,6 +51,13 @@ export default async function ReportesPage() {
           .order('fecha_pago', { ascending: false }),
       ])
 
+      const duration = Date.now() - startTime
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(
+          `[DB-QUERY-DONE] reportes - Query completada en ${duration}ms`
+        )
+      }
+
       return {
         clientes: clientes || [],
         costos: costos || [],
@@ -62,6 +72,10 @@ export default async function ReportesPage() {
   )
 
   const { clientes, costos, pagos } = await getReportesData()
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[CACHE-CHECK] reportes - Si viste [DB-QUERY] arriba = query nueva. Si no lo viste = usando cache ✓`)
+  }
 
   return (
     <div className="space-y-6 p-6">

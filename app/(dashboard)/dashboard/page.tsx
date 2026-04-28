@@ -14,8 +14,11 @@ export default async function DashboardPage() {
 
   const getDashboardData = unstable_cache(
     async () => {
+      const startTime = Date.now()
       if (process.env.NODE_ENV !== 'production') {
-        console.log(`[cache-miss] dashboard query user=${user?.id || 'anonymous'} ts=${new Date().toISOString()}`)
+        console.log(
+          `[DB-QUERY] dashboard - Ejecutando query a la DB para user=${user?.id || 'anonymous'}`
+        )
       }
 
       const [{ data: clientesData }, { data: costosData }, { data: pagosData }] = await Promise.all([
@@ -29,6 +32,13 @@ export default async function DashboardPage() {
           .select('monto, fecha_pago, estado')
           .order('fecha_pago', { ascending: true }),
       ])
+
+      const duration = Date.now() - startTime
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(
+          `[DB-QUERY-DONE] dashboard - Query completada en ${duration}ms`
+        )
+      }
 
       return {
         clientesData: clientesData || [],
@@ -44,6 +54,10 @@ export default async function DashboardPage() {
   )
 
   const { clientesData, costosData, pagosData } = await getDashboardData()
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[CACHE-CHECK] dashboard - Si viste [DB-QUERY] arriba = query nueva. Si no lo viste = usando cache ✓`)
+  }
 
   const totalClientes = clientesData.length
   const totalVentas = costosData.length
